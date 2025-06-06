@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # Database
     POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
-    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "Dipak@4646")
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "ethicalhire")
     SQLALCHEMY_DATABASE_URI: str = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}"
     

@@ -13,7 +13,7 @@ from app.ml.bias import BiasDetector
 def init_db():
     """Initialize database with tables and sample data."""
     # Create database engine
-    engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
+    engine = create_engine("postgresql://admin:admin123@localhost:5432/mydb")
     
     # Create all tables
     Base.metadata.create_all(bind=engine)

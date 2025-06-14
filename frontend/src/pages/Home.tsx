@@ -1,91 +1,149 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Container,
   Typography,
-  Button,
   Box,
   Paper,
-  Grid,
+  Button,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SecurityIcon from '@mui/icons-material/Security';
 
 const Home = () => {
-  const navigate = useNavigate();
-
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 6 }}>
+      <Box sx={{ mb: 6, textAlign: 'center' }}>
         <Typography variant="h3" component="h1" gutterBottom>
           AI-Powered Resume Analysis
         </Typography>
         <Typography variant="h5" color="text.secondary" paragraph>
-          Upload your resume for automated analysis and bias detection
+          Fair and unbiased resume screening with advanced AI technology
         </Typography>
       </Box>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
           <Paper
             sx={{
               p: 4,
+              height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              height: '100%',
             }}
           >
-            <UploadFileIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h5" component="h2" gutterBottom>
+            <Typography variant="h5" gutterBottom>
               Upload Resume
             </Typography>
-            <Typography color="text.secondary" paragraph>
-              Upload your resume for automated analysis. Our AI will evaluate your
-              qualifications and provide detailed feedback.
+            <Typography paragraph>
+              Upload a resume to analyze its content and detect potential biases in
+              the screening process.
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<UploadFileIcon />}
-              onClick={() => navigate('/upload')}
-              sx={{ mt: 2 }}
-            >
-              Upload Now
-            </Button>
+            <Box sx={{ mt: 'auto' }}>
+              <Button
+                component={RouterLink}
+                to="/upload"
+                variant="contained"
+                size="large"
+                startIcon={<UploadFileIcon />}
+                fullWidth
+              >
+                Upload Resume
+              </Button>
+            </Box>
           </Paper>
-        </Grid>
+        </Box>
 
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
           <Paper
             sx={{
               p: 4,
+              height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              height: '100%',
             }}
           >
-            <AssessmentIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h5" component="h2" gutterBottom>
+            <Typography variant="h5" gutterBottom>
               View Analysis
             </Typography>
-            <Typography color="text.secondary" paragraph>
-              View detailed analysis of your resume, including bias detection and
-              improvement suggestions.
+            <Typography paragraph>
+              View detailed analysis results and bias detection metrics for all
+              processed resumes.
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<AssessmentIcon />}
-              onClick={() => navigate('/analysis')}
-              sx={{ mt: 2 }}
-            >
-              View Results
-            </Button>
+            <Box sx={{ mt: 'auto' }}>
+              <Button
+                component={RouterLink}
+                to="/analysis"
+                variant="outlined"
+                size="large"
+                startIcon={<AssessmentIcon />}
+                fullWidth
+              >
+                View Analysis
+              </Button>
+            </Box>
           </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 6 }}>
+        <Typography variant="h4" gutterBottom>
+          Key Features
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+            <Paper sx={{ p: 3 }}>
+              <List>
+                <ListItem>
+                  <ListItemIcon>
+                    <CheckCircleIcon color="primary" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Accurate Analysis"
+                    secondary="Advanced NLP and machine learning for precise resume evaluation"
+                  />
+                </ListItem>
+              </List>
+            </Paper>
+          </Box>
+          <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+            <Paper sx={{ p: 3 }}>
+              <List>
+                <ListItem>
+                  <ListItemIcon>
+                    <SecurityIcon color="primary" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Bias Detection"
+                    secondary="Comprehensive analysis of potential biases in the screening process"
+                  />
+                </ListItem>
+              </List>
+            </Paper>
+          </Box>
+          <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+            <Paper sx={{ p: 3 }}>
+              <List>
+                <ListItem>
+                  <ListItemIcon>
+                    <AssessmentIcon color="primary" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Detailed Metrics"
+                    secondary="In-depth analysis of skills, experience, and demographic factors"
+                  />
+                </ListItem>
+              </List>
+            </Paper>
+          </Box>
+        </Box>
+      </Box>
     </Container>
   );
 };

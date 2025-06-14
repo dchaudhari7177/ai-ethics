@@ -5,7 +5,6 @@ import {
   Typography,
   Box,
   Paper,
-  Grid,
   Chip,
   Alert,
   CircularProgress,
@@ -110,8 +109,8 @@ const AnalysisDetail = () => {
           </Typography>
         </Box>
 
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Decision
@@ -127,16 +126,16 @@ const AnalysisDetail = () => {
                   }
                   label={analysis.decision}
                   color={analysis.decision === 'shortlist' ? 'success' : 'error'}
-                  size="large"
+                  sx={{ height: 32 }}
                 />
                 <Typography>
                   Confidence: {(analysis.confidence * 100).toFixed(1)}%
                 </Typography>
               </Box>
             </Paper>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
+          <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Skills
@@ -147,9 +146,9 @@ const AnalysisDetail = () => {
                 ))}
               </Box>
             </Paper>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ flex: '1 1 100%', minWidth: 0 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Experience
@@ -158,15 +157,15 @@ const AnalysisDetail = () => {
                 Years of Experience: {analysis.features.experience}
               </Typography>
             </Paper>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
+          <Box sx={{ flex: '1 1 100%', minWidth: 0 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Bias Analysis
               </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
                   <Typography variant="subtitle1" gutterBottom>
                     Overall Statistics
                   </Typography>
@@ -179,10 +178,10 @@ const AnalysisDetail = () => {
                   <Typography>
                     Rejection Rate: {(analysis.bias_metrics.overall.rejection_rate * 100).toFixed(1)}%
                   </Typography>
-                </Grid>
+                </Box>
 
                 {analysis.bias_metrics.demographics.gender && (
-                  <Grid item xs={12} md={6}>
+                  <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
                     <Typography variant="subtitle1" gutterBottom>
                       Gender Statistics
                     </Typography>
@@ -192,11 +191,11 @@ const AnalysisDetail = () => {
                     <Typography>
                       Shortlist Rate: {(analysis.bias_metrics.demographics.gender.shortlist_rate * 100).toFixed(1)}%
                     </Typography>
-                  </Grid>
+                  </Box>
                 )}
 
                 {analysis.bias_metrics.demographics.age && (
-                  <Grid item xs={12} md={6}>
+                  <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
                     <Typography variant="subtitle1" gutterBottom>
                       Age Statistics
                     </Typography>
@@ -206,11 +205,11 @@ const AnalysisDetail = () => {
                     <Typography>
                       Age Group: {analysis.bias_metrics.demographics.age.group}
                     </Typography>
-                  </Grid>
+                  </Box>
                 )}
 
                 {analysis.bias_metrics.fairness && (
-                  <Grid item xs={12}>
+                  <Box sx={{ flex: '1 1 100%', minWidth: 0 }}>
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="subtitle1" gutterBottom>
                       Fairness Metrics
@@ -225,12 +224,12 @@ const AnalysisDetail = () => {
                         Equal Opportunity: {(analysis.bias_metrics.fairness.equal_opportunity * 100).toFixed(1)}%
                       </Typography>
                     )}
-                  </Grid>
+                  </Box>
                 )}
-              </Grid>
+              </Box>
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Paper>
     </Container>
   );

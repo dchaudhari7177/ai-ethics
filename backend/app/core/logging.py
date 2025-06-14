@@ -5,8 +5,8 @@ from logging.handlers import RotatingFileHandler
 
 def setup_logging():
     # Create logs directory if it doesn't exist
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
+    log_dir = Path("backend/logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
     
     # Configure logging format
     log_format = logging.Formatter(

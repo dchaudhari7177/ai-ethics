@@ -1,0 +1,11 @@
+
+            Alex Johnson
+            Full Stack Developer
+            Experience:
+            - Full Stack Developer at WebTech (2017-present)
+            - Frontend Developer at AppCo (2015-2017)
+            Education:
+            - BS Software Engineering, Tech Institute
+            Skills:
+            JavaScript, TypeScript, Node.js, React, MongoDB
+            

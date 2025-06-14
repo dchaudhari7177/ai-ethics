@@ -1,0 +1,12 @@
+
+            Jane Smith
+            Data Scientist
+            Experience:
+            - Data Scientist at AI Solutions (2019-present)
+            - Data Analyst at BigData Inc (2016-2019)
+            Education:
+            - MS Data Science, Tech University
+            - BS Mathematics, State College
+            Skills:
+            Python, R, TensorFlow, Statistical Analysis
+            

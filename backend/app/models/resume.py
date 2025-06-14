@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, JSON, DateTime, ForeignKe
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from app.db.base import Base
+from ..db.base import Base
 
 class Resume(Base):
     __tablename__ = "resumes"

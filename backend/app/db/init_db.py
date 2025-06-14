@@ -1,143 +1,133 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import os
+import json
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
-import random
+from datetime import datetime
+from ..ml.model import ResumeAnalyzer
+from ..ml.bias import BiasDetector
 
-from app.models.resume import Base, Resume, Analysis, BiasMetrics
-from app.ml.model import ResumeAnalyzer
-from app.ml.bias import BiasDetector
+# Folders for resumes and analysis results
+RESUME_DIR = os.path.join(os.path.dirname(__file__), '../../resumes')
+ANALYSIS_DIR = os.path.join(os.path.dirname(__file__), '../../analysis')
 
-# Replace with actual database credentials
-DATABASE_URL = "postgresql://postgres:Dipak4646@localhost:5432/mydb"
+os.makedirs(RESUME_DIR, exist_ok=True)
+os.makedirs(ANALYSIS_DIR, exist_ok=True)
 
-def init_db():
-    """Initialize database with tables and sample data."""
-    engine = create_engine(DATABASE_URL)
-    Base.metadata.create_all(bind=engine)
+def save_resume(filename, content):
+    """Save resume content to a file."""
+    path = os.path.join(RESUME_DIR, filename)
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    return path
 
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    db = SessionLocal()
+def save_analysis(filename, data):
+    """Save analysis results to a JSON file."""
+    path = os.path.join(ANALYSIS_DIR, filename)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+    return path
 
-    try:
-        if db.query(Resume).count() > 0:
-            print("Database already contains data. Skipping initialization.")
-            return
+def main():
+    """Initialize the system with sample resumes and analyze them."""
+    print("Initializing resume analysis system...")
+    
+    # Sample resumes for testing
+    sample_resumes = [
+        {
+            "filename": "john_doe_resume.txt",
+            "content": """
+            John Doe
+            Software Engineer
+            Experience:
+            - Senior Software Engineer at Tech Corp (2018-present)
+            - Software Developer at StartupX (2015-2018)
+            Education:
+            - BS Computer Science, University of Technology
+            Skills:
+            Python, JavaScript, React, Machine Learning
+            """,
+            "protected_attributes": {"gender": "male", "age": 32}
+        },
+        {
+            "filename": "jane_smith_resume.txt",
+            "content": """
+            Jane Smith
+            Data Scientist
+            Experience:
+            - Data Scientist at AI Solutions (2019-present)
+            - Data Analyst at BigData Inc (2016-2019)
+            Education:
+            - MS Data Science, Tech University
+            - BS Mathematics, State College
+            Skills:
+            Python, R, TensorFlow, Statistical Analysis
+            """,
+            "protected_attributes": {"gender": "female", "age": 28}
+        },
+        {
+            "filename": "alex_johnson_resume.txt",
+            "content": """
+            Alex Johnson
+            Full Stack Developer
+            Experience:
+            - Full Stack Developer at WebTech (2017-present)
+            - Frontend Developer at AppCo (2015-2017)
+            Education:
+            - BS Software Engineering, Tech Institute
+            Skills:
+            JavaScript, TypeScript, Node.js, React, MongoDB
+            """,
+            "protected_attributes": {"gender": "non-binary", "age": 30}
+        }
+    ]
 
-        sample_resumes = [
-            {
-                "filename": "john_doe_resume.pdf",
-                "content": """
-                John Doe
-                Software Engineer
+    print("Initializing ML models...")
+    resume_analyzer = ResumeAnalyzer()
+    bias_detector = BiasDetector()
 
-                Experience:
-                - Senior Software Engineer at Tech Corp (2018-present)
-                - Software Developer at StartupX (2015-2018)
+    print("Processing sample resumes...")
+    for resume_data in sample_resumes:
+        print(f"\nProcessing {resume_data['filename']}...")
+        
+        # Save resume file
+        save_resume(resume_data["filename"], resume_data["content"])
+        print(f"Saved resume to {RESUME_DIR}")
 
-                Education:
-                - BS Computer Science, University of Technology
+        # Extract features
+        features = resume_analyzer.extract_features(resume_data["content"])
+        features["protected_attributes"] = resume_data["protected_attributes"]
+        print("Features extracted successfully")
 
-                Skills:
-                Python, JavaScript, React, Machine Learning
-                """,
-                "protected_attributes": {"gender": "male", "age": 32}
-            },
-            {
-                "filename": "jane_smith_resume.pdf",
-                "content": """
-                Jane Smith
-                Data Scientist
+        # Predict
+        decision, confidence, feature_importance = resume_analyzer.predict(resume_data["content"])
+        print(f"Prediction: {decision} (confidence: {confidence:.2f})")
 
-                Experience:
-                - Data Scientist at AI Solutions (2019-present)
-                - Data Analyst at BigData Inc (2016-2019)
+        # Bias detection
+        bias_metrics = bias_detector.detect_bias(
+            features=pd.DataFrame([features]),
+            predictions=np.array([1 if decision == "shortlist" else 0]),
+            protected_attributes=resume_data["protected_attributes"]
+        )
+        print("Bias analysis completed")
 
-                Education:
-                - MS Data Science, Tech University
-                - BS Mathematics, State College
+        # Save analysis result
+        analysis_result = {
+            "filename": resume_data["filename"],
+            "features": features,
+            "decision": decision,
+            "confidence": confidence,
+            "feature_importance": feature_importance,
+            "bias_metrics": bias_metrics,
+            "protected_attributes": resume_data["protected_attributes"],
+            "analyzed_at": datetime.utcnow().isoformat()
+        }
+        analysis_filename = resume_data["filename"].replace('.txt', '_analysis.json')
+        save_analysis(analysis_filename, analysis_result)
+        print(f"Analysis saved to {ANALYSIS_DIR}")
 
-                Skills:
-                Python, R, TensorFlow, Statistical Analysis
-                """,
-                "protected_attributes": {"gender": "female", "age": 28}
-            },
-            {
-                "filename": "alex_johnson_resume.pdf",
-                "content": """
-                Alex Johnson
-                Full Stack Developer
-
-                Experience:
-                - Full Stack Developer at WebTech (2017-present)
-                - Frontend Developer at AppCo (2015-2017)
-
-                Education:
-                - BS Software Engineering, Tech Institute
-
-                Skills:
-                JavaScript, TypeScript, Node.js, React, MongoDB
-                """,
-                "protected_attributes": {"gender": "non-binary", "age": 30}
-            }
-        ]
-
-        resume_analyzer = ResumeAnalyzer()
-        bias_detector = BiasDetector()
-
-        for resume_data in sample_resumes:
-            resume = Resume(
-                filename=resume_data["filename"],
-                content=resume_data["content"]
-            )
-            db.add(resume)
-            db.flush()
-
-            features = resume_analyzer.extract_features(resume_data["content"])
-            resume.extracted_features = {
-                **features,
-                "protected_attributes": resume_data["protected_attributes"]
-            }
-
-            decision, confidence, feature_importance = resume_analyzer.predict(resume_data["content"])
-
-            analysis = Analysis(
-                resume_id=resume.id,
-                score=confidence,
-                decision=decision,
-                confidence=confidence,
-                feature_importance=feature_importance,
-                explanation=f"Decision based on {len(feature_importance)} features"
-            )
-            db.add(analysis)
-
-            bias_metrics = bias_detector.detect_bias(
-                features=pd.DataFrame([features]),
-                predictions=np.array([1 if decision == "shortlist" else 0]),
-                protected_attributes=resume_data["protected_attributes"]
-            )
-
-            metrics = BiasMetrics(
-                resume_id=resume.id,
-                demographic_parity=bias_metrics["demographic_parity"],
-                equal_opportunity=bias_metrics["equal_opportunity"],
-                disparate_impact=bias_metrics["disparate_impact"],
-                protected_attributes=resume_data["protected_attributes"],
-                mitigation_applied=None
-            )
-            db.add(metrics)
-
-        db.commit()
-        print("Database initialized with sample data")
-
-    except Exception as e:
-        print(f"Error initializing database: {str(e)}")
-        db.rollback()
-        raise
-
-    finally:
-        db.close()
+    print("\nInitialization completed successfully!")
+    print(f"Resumes are stored in: {RESUME_DIR}")
+    print(f"Analysis results are stored in: {ANALYSIS_DIR}")
 
 if __name__ == "__main__":
-    init_db()
+    main()

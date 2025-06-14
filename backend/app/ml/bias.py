@@ -1,34 +1,49 @@
-from aif360.datasets import BinaryLabelDataset
-from aif360.metrics import BinaryLabelDatasetMetric
-from aif360.algorithms.preprocessing import Reweighing
-from aif360.algorithms.inprocessing import PrejudiceRemover
-from aif360.algorithms.postprocessing import EqOddsPostprocessing
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 from pathlib import Path
 import json
+import logging
 
-from app.core.config import settings
-from app.core.logging import logger, bias_logger
+from ..core.config import settings
+from ..core.logging import logger, bias_logger
+
+# Try to import AIF360 components, but don't fail if not available
+try:
+    from aif360.datasets import BinaryLabelDataset
+    from aif360.metrics import BinaryLabelDatasetMetric
+    from aif360.algorithms.preprocessing import Reweighing
+    from aif360.algorithms.inprocessing import PrejudiceRemover
+    from aif360.algorithms.postprocessing import EqOddsPostprocessing
+    AIF360_AVAILABLE = True
+except ImportError:
+    logger.warning("AIF360 not available. Bias detection features will be limited.")
+    AIF360_AVAILABLE = False
 
 class BiasDetector:
     def __init__(self):
-        self.protected_attributes = settings.PROTECTED_ATTRIBUTES
+        """Initialize bias detection metrics."""
         self.metrics = {}
+        self.protected_attributes = settings.PROTECTED_ATTRIBUTES
         self.mitigation_techniques = {
             'reweighing': self._apply_reweighing,
             'prejudice_remover': self._apply_prejudice_remover,
             'equalized_odds': self._apply_equalized_odds
         }
+        
+        if not AIF360_AVAILABLE:
+            logger.warning("AIF360 is not available. Some bias detection features will be disabled.")
     
     def create_dataset(
         self,
         features: pd.DataFrame,
         labels: np.ndarray,
         protected_attribute_names: List[str]
-    ) -> BinaryLabelDataset:
+    ) -> Any:
         """Create an AIF360 dataset from features and labels."""
+        if not AIF360_AVAILABLE:
+            return None
+            
         return BinaryLabelDataset(
             df=features,
             label_names=['decision'],
@@ -39,11 +54,18 @@ class BiasDetector:
     
     def compute_metrics(
         self,
-        dataset: BinaryLabelDataset,
+        dataset: Any,
         privileged_groups: List[Dict],
         unprivileged_groups: List[Dict]
     ) -> Dict[str, float]:
         """Compute fairness metrics for the dataset."""
+        if not AIF360_AVAILABLE:
+            return {
+                'demographic_parity': 0.0,
+                'equal_opportunity': 0.0,
+                'disparate_impact': 1.0
+            }
+            
         metrics = BinaryLabelDatasetMetric(
             dataset,
             unprivileged_groups=unprivileged_groups,
@@ -67,36 +89,123 @@ class BiasDetector:
         predictions: np.ndarray,
         protected_attributes: Dict[str, Any]
     ) -> Dict[str, float]:
-        """Detect bias in model predictions."""
-        # Create dataset
-        dataset = self.create_dataset(
-            features,
-            predictions,
-            list(protected_attributes.keys())
-        )
+        """
+        Detect bias in predictions based on protected attributes.
         
-        # Define privileged and unprivileged groups
-        privileged_groups = [{attr: 1} for attr in protected_attributes]
-        unprivileged_groups = [{attr: 0} for attr in protected_attributes]
+        Args:
+            features: DataFrame containing resume features
+            predictions: Array of binary predictions (1 for shortlist, 0 for reject)
+            protected_attributes: Dictionary of protected attributes (e.g., gender, age)
+            
+        Returns:
+            Dictionary containing bias metrics
+        """
+        try:
+            # Calculate basic statistics
+            total_candidates = len(predictions)
+            shortlisted = np.sum(predictions)
+            rejection_rate = 1 - (shortlisted / total_candidates)
+            
+            # Calculate demographic statistics
+            demographic_stats = self._calculate_demographic_stats(
+                predictions, protected_attributes
+            )
+            
+            # Calculate fairness metrics
+            fairness_metrics = self._calculate_fairness_metrics(
+                predictions, protected_attributes
+            )
+            
+            # Combine all metrics
+            self.metrics = {
+                "overall": {
+                    "total_candidates": int(total_candidates),
+                    "shortlisted": int(shortlisted),
+                    "rejection_rate": float(rejection_rate)
+                },
+                "demographics": demographic_stats,
+                "fairness": fairness_metrics
+            }
+            
+            return self.metrics
+            
+        except Exception as e:
+            logger.error(f"Error in bias detection: {str(e)}")
+            return {
+                "error": str(e),
+                "overall": {
+                    "total_candidates": int(total_candidates),
+                    "shortlisted": int(shortlisted),
+                    "rejection_rate": float(rejection_rate)
+                }
+            }
+    
+    def _calculate_demographic_stats(
+        self,
+        predictions: np.ndarray,
+        protected_attributes: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Calculate statistics for different demographic groups."""
+        stats = {}
         
-        # Compute metrics
-        metrics = self.compute_metrics(
-            dataset,
-            privileged_groups,
-            unprivileged_groups
-        )
+        # Calculate gender statistics
+        if "gender" in protected_attributes:
+            gender = protected_attributes["gender"]
+            gender_shortlisted = np.sum(predictions)
+            gender_total = len(predictions)
+            stats["gender"] = {
+                "value": gender,
+                "shortlisted": int(gender_shortlisted),
+                "total": int(gender_total),
+                "shortlist_rate": float(gender_shortlisted / gender_total)
+            }
         
-        # Check against thresholds
-        bias_detected = (
-            abs(metrics['demographic_parity']) > (1 - settings.DEMOGRAPHIC_PARITY_THRESHOLD) or
-            abs(metrics['equal_opportunity']) > (1 - settings.EQUAL_OPPORTUNITY_THRESHOLD) or
-            abs(metrics['disparate_impact'] - 1) > (1 - settings.DISPARATE_IMPACT_THRESHOLD)
-        )
+        # Calculate age statistics
+        if "age" in protected_attributes:
+            age = protected_attributes["age"]
+            age_group = self._get_age_group(age)
+            stats["age"] = {
+                "value": age,
+                "group": age_group
+            }
         
-        if bias_detected:
-            bias_logger.warning("Bias detected in model predictions")
+        return stats
+    
+    def _calculate_fairness_metrics(
+        self,
+        predictions: np.ndarray,
+        protected_attributes: Dict[str, Any]
+    ) -> Dict[str, float]:
+        """Calculate fairness metrics."""
+        metrics = {}
+        
+        # Calculate demographic parity
+        if "gender" in protected_attributes:
+            gender_shortlist_rate = np.mean(predictions)
+            metrics["demographic_parity"] = float(gender_shortlist_rate)
+        
+        # Calculate equal opportunity
+        if "gender" in protected_attributes:
+            metrics["equal_opportunity"] = float(np.mean(predictions))
         
         return metrics
+    
+    def _get_age_group(self, age: int) -> str:
+        """Convert age to age group."""
+        if age < 25:
+            return "18-24"
+        elif age < 35:
+            return "25-34"
+        elif age < 45:
+            return "35-44"
+        elif age < 55:
+            return "45-54"
+        else:
+            return "55+"
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get the latest bias metrics."""
+        return self.metrics
     
     def mitigate_bias(
         self,

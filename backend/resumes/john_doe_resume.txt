@@ -1,0 +1,11 @@
+
+            John Doe
+            Software Engineer
+            Experience:
+            - Senior Software Engineer at Tech Corp (2018-present)
+            - Software Developer at StartupX (2015-2018)
+            Education:
+            - BS Computer Science, University of Technology
+            Skills:
+            Python, JavaScript, React, Machine Learning
+            

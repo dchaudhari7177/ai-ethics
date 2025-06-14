@@ -8,6 +8,14 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "EthicalHire"
     
+    # Server Settings
+    HOST: str = os.getenv("HOST", "0.0.0.0")
+    PORT: str = os.getenv("PORT", "8000")
+    NEXT_PUBLIC_API_URL: str = os.getenv("NEXT_PUBLIC_API_URL", "http://localhost:8000")
+    
+    # Logging
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
@@ -26,8 +34,8 @@ class Settings(BaseSettings):
     ]
     
     # ML Model Settings
-    MODEL_PATH: Path = Path("app/ml/models")
-    RESUME_UPLOAD_DIR: Path = Path("app/uploads/resumes")
+    MODEL_PATH: Path = Path("backend/app/ml/models")
+    RESUME_UPLOAD_DIR: Path = Path("backend/app/uploads/resumes")
     
     # Bias Detection
     PROTECTED_ATTRIBUTES: List[str] = [
